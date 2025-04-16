@@ -63,10 +63,10 @@ Common issues:
 ## Development Team
 
 This plugin was developed by:
-- Ting-Hsuan Chen
-- Cameron Smith
-- Jiageng Mao
-- Daniel Wang
+- [Ting-Hsuan Chen](https://koi953215.github.io/)
+- [Cameron Smith](https://cameronosmith.github.io/)
+- [Jiageng Mao](https://pointscoder.github.io/)
+- [Daniel Wang](https://github.com/DW1209)
 
 ## Acknowledgments
 
