@@ -2,11 +2,16 @@
 
 A Blender plugin that uses AI to convert JPG images into 3D mesh models. This plugin integrates the LGM (Latent Gaussian Model) image-to-mesh generation pipeline directly into Blender for a seamless 3D creation workflow.
 
-![Demo Image](assets/input_demo.jpg.jpg)
+<p align="center">
+    <img src="assets/input_demo.jpg">
+</p>
 
 ## Demo
 
 Check out our demo video to see the plugin in action:
+<p align="center">
+    <img src="assets/output_demo.png">
+</p>
 
 [Watch Demo Video](assets/blender_demo.mp4)
 
