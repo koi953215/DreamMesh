@@ -66,7 +66,7 @@ This plugin was developed by:
 - [Ting-Hsuan Chen](https://koi953215.github.io/)
 - [Cameron Smith](https://cameronosmith.github.io/)
 - [Jiageng Mao](https://pointscoder.github.io/)
-- [Daniel Wang](https://github.com/DW1209)
+- [Daniel Wang](https://dw1209.github.io/)
 
 ## Acknowledgments
 
