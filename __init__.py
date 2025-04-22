@@ -1,10 +1,10 @@
 bl_info = {
-    "name": "AI Image/Text to Mesh Generator",
+    "name": "AI Image/Text to 3D Generator",
     "author": "Your Name",
     "version": (1, 0),
     "blender": (3, 0, 0),
-    "location": "View3D > Sidebar > AI Mesh",
-    "description": "Generate 3D meshes from JPG images or text prompts using AI",
+    "location": "View3D > Sidebar > AI 3D",
+    "description": "Generate 3D output from JPG images or text prompts using AI",
     "warning": "Requires CUDA-compatible GPU",
     "doc_url": "",
     "category": "3D View",
@@ -25,7 +25,7 @@ __file_path__ = os.path.dirname(os.path.realpath(__file__))
 if __file_path__ not in sys.path:
     sys.path.append(__file_path__)
 
-# Try to import mesh generator module
+# Try to import 3D generator module
 try:
     from . import mesh_generator
     from . import text_to_image
@@ -217,11 +217,11 @@ class AIMeshGen_OT_GenerateMesh(Operator):
 
 # UI panel class
 class AIMeshGen_PT_Panel(Panel):
-    bl_label = "AI Image/Text to Mesh"
-    bl_idname = "AIMeshGen_PT_Panel"
+    bl_label = "AI Image/Text to 3D"
+    bl_idname = "AI3DGen_PT_Panel"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = "AI Mesh"
+    bl_category = "AI 3D"
     
     def draw(self, context):
         layout = self.layout
