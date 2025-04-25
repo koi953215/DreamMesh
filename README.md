@@ -1,3 +1,9 @@
+# Rigged Mesh extension addition to below
+Inside UniRig, add a 'scene.json' to the directory 'out' and run 'python genmesh.py' to populate the 'out' directory with meshes.
+
+Then similarly run 'bash run_allmeshes.sh' to convert each mesh to a rigged fbx file with the same name, which can be imported to blender.
+
+
 # AI Scene Generator - Blender Plugin
 
 A Blender plugin that generates complete 3D scenes from text descriptions using AI. This addon allows you to describe a scene and generate 3D models for each object automatically, positioning them according to your description.
