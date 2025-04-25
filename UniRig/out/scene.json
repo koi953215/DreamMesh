@@ -1,0 +1,18 @@
+{
+  "scene": "fountain_and_bird_scene",
+  "objects": [
+    {
+      "name": "water_fountain",
+      "type": "decoration",
+      "position": { "x": 0, "y": 0, "z": 0 },
+      "prompt": "a small round water fountain made of stone, with gently flowing water, isolated on a plain white background, fully visible and centered, with a clear contour"
+    },
+    {
+      "name": "blue_bird",
+      "type": "animal",
+      "position": { "x": 0, "y": 2, "z": 0 },
+      "prompt": "a small, vibrant blue bird with a smooth, glossy plumage, flying mid-air with wings spread wide, isolated on a plain white background, fully visible and centered"
+    }
+  ]
+}
+
