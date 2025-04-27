@@ -4,31 +4,31 @@
       {
         "name": "oak_tree",
         "type": "tree",
-        "position": { "x": 2.5, "y": 0, "z": -3.0 },
+        "position": { "x": 2.5, "y": 0, "z": 0.0 },
         "prompt": "a single oak tree with a thick trunk and a full canopy of green leaves, isolated on a plain white background, fully visible and centered"
       },
       {
         "name": "rose_bush",
         "type": "flower",
-        "position": { "x": -1.2, "y": 0, "z": 1.8 },
+        "position": { "x": -1.2, "y": 0, "z": 0.0 },
         "prompt": "a dense rose bush with vibrant red roses and lush green leaves, centered and isolated on a clean white background"
       },
       {
         "name": "garden_bench",
         "type": "furniture",
-        "position": { "x": 0, "y": 0, "z": 0 },
+        "position": { "x": 0, "y": 0, "z": 0.0 },
         "prompt": "a wooden garden bench with slatted back and armrests, fully visible and centered on a white background, object-level view"
       },
       {
         "name": "stone_path",
         "type": "path",
-        "position": { "x": -3.5, "y": 0, "z": -1.5 },
+        "position": { "x": -3.5, "y": 0, "z": 0.0 },
         "prompt": "a short segment of a stone path made of flat, natural stones, isolated and centered on a plain white background"
       },
       {
         "name": "water_fountain",
         "type": "decoration",
-        "position": { "x": 1.0, "y": 0, "z": 2.2 },
+        "position": { "x": 1.0, "y": 0, "z": 0.0 },
         "prompt": "a small round water fountain made of stone, with gently flowing water, isolated on a white background, clearly visible and centered"
       }
     ]

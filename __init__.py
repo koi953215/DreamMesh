@@ -41,8 +41,9 @@ except ImportError:
 addon_dir = os.path.dirname(os.path.realpath(__file__))
 
 # Global variables
-TEMP_DIR = tempfile.gettempdir()
+TEMP_DIR = addon_dir #tempfile.gettempdir()
 JSON_FILE_PATH = os.path.join(TEMP_DIR, "scene_generated.json")
+BG_JSON_FILE_PATH = os.path.join(TEMP_DIR, "scene_background.json")
 SCENE_FOLDER = os.path.join(TEMP_DIR, "Scene")
 MODELS_FOLDER = os.path.join(TEMP_DIR, "3D_Models")
 ACTIVE_DRIVER = None
@@ -200,6 +201,7 @@ Make sure:
 - Use words like "isolated," "on a plain white background," or "studio-lit" to ensure easy background removal
 - Avoid describing scenes or background elements
 - The object should have a **clear contour** and be **fully visible** (no parts cropped or occluded)
+- The Z value in the JSON should always be 0
 Only return JSON. No extra explanation.
 """
 
@@ -217,6 +219,73 @@ Only return JSON. No extra explanation.
                 f.write(json_result)
 
             self.report({'INFO'}, f"Scene JSON saved to: {JSON_FILE_PATH}")
+            return {'FINISHED'}
+
+        except Exception as e:
+            self.report({'ERROR'}, f"OpenAI API Error: {e}")
+            return {'CANCELLED'}
+
+class SCENEGEN_OT_GenerateBackgroundJSON(Operator):
+    bl_idname = "scenegen.generate_background_json"
+    bl_label = "Generate Background JSON"
+    bl_description = "Generate a background JSON file using OpenAI"
+
+    def execute(self, context):
+        preferences = context.preferences.addons[__name__].preferences
+        props = context.scene.scene_gen
+        scene_desc = props.scene_prompt.strip()
+
+        if not scene_desc:
+            self.report({'ERROR'}, "Scene description cannot be empty.")
+            return {'CANCELLED'}
+        
+        if not preferences.openai_api_key:
+            self.report({'ERROR'}, "OpenAI API key is not set. Please check the addon preferences.")
+            return {'CANCELLED'}
+
+        self.report({'INFO'}, "Generating background JSON...")
+
+        try:
+            # Create OpenAI client
+            print("Using OpenAI API Key:", preferences.openai_api_key)
+            client = openai.OpenAI(api_key=preferences.openai_api_key)
+
+            # Load example JSON
+            example_path = os.path.join(addon_dir, "background_example.json")
+            with open(example_path, 'r') as f:
+                example_json_format = f.read()
+
+            # Create structured chat prompt
+            chat_prompt = f"""
+Please generate a JSON file that contains exactly one "background" field based on the scene description:
+"{scene_desc}"
+Match the structure and field names exactly as shown in this example:
+{example_json_format}
+Make sure:
+- The "name" is a short, simple one-word identifier for the background (e.g., "garden", "forest", "desert")
+- The "prompt" describes a **full background scene** (not a single object)
+- The "prompt" should describe the empty background without any objects in it 
+- The "prompt" should include environmental details such as lighting, atmosphere, and scenery
+- The "prompt" should create a clear, peaceful, beautiful environment
+- Avoid mentioning isolated objects or single item focus
+- Only output pure JSON. No extra explanation, no commentary.
+"""
+
+            # Call OpenAI
+            response = client.chat.completions.create(
+                model="gpt-4",
+                messages=[{"role": "user", "content": chat_prompt}],
+                temperature=0.7,
+            )
+
+            background_json_text = response.choices[0].message.content.strip()
+
+            # Save background JSON to temp directory
+            background_json_path = BG_JSON_FILE_PATH
+            with open(background_json_path, 'w') as f:
+                f.write(background_json_text)
+
+            self.report({'INFO'}, f"Background JSON saved to: {background_json_path}")
             return {'FINISHED'}
 
         except Exception as e:
@@ -376,6 +445,148 @@ class SCENEGEN_OT_GenerateImages(Operator):
                 return {'CANCELLED'}
         else:
             self.report({'ERROR'}, "Failed to login to HuggingFace. Please check your credentials.")
+            return {'CANCELLED'}
+
+class SCENEGEN_OT_GenerateBackgroundImage(Operator):
+    bl_idname = "scenegen.generate_background_image"
+    bl_label = "Generate Background Image"
+    bl_description = "Generate a background image using the background JSON"
+
+    def create_scene_folder(self):
+        """Create a Scene folder for storing generated images"""
+        if not os.path.exists(SCENE_FOLDER):
+            os.makedirs(SCENE_FOLDER)
+        return SCENE_FOLDER
+
+    def login_huggingface(self, username, password):
+        """Login to HuggingFace with provided credentials"""
+        options = webdriver.ChromeOptions()
+        prefs = {
+            'profile.default_content_setting_values': {
+                'notifications': 2
+            }
+        }
+        options.add_experimental_option('prefs', prefs)
+        options.add_argument("disable-infobars")
+        options.add_argument("--start-maximized")
+        
+        driver = webdriver.Chrome(options=options)
+        
+        url = "https://huggingface.co/login"
+        driver.get(url)
+        
+        time.sleep(2)
+        
+        try:
+            username_field = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.NAME, "username"))
+            )
+            password_field = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.NAME, "password"))
+            )
+            
+            username_field.clear()
+            username_field.send_keys(username)
+            
+            password_field.clear()
+            password_field.send_keys(password)
+            
+            login_button = driver.find_element(By.XPATH, "//button[@type='submit']")
+            login_button.click()
+            
+            time.sleep(2)
+            
+            return driver
+            
+        except Exception as e:
+            print(f"Error during login: {e}")
+            driver.quit()
+            return None
+
+    def execute(self, context):
+        global ACTIVE_DRIVER
+        preferences = context.preferences.addons[__name__].preferences
+        
+        if not os.path.exists(BG_JSON_FILE_PATH):
+            self.report({'ERROR'}, "Background JSON file not found. Generate it first.")
+            return {'CANCELLED'}
+            
+        if not preferences.huggingface_username or not preferences.huggingface_password:
+            self.report({'ERROR'}, "HuggingFace credentials not set. Please check the addon preferences.")
+            return {'CANCELLED'}
+
+        self.report({'INFO'}, "Creating scene folder...")
+        scene_folder = self.create_scene_folder()
+
+        # Load background JSON
+        with open(BG_JSON_FILE_PATH, 'r') as file:
+            data = json.load(file)
+        
+        if "background" not in data or "prompt" not in data["background"]:
+            self.report({'ERROR'}, "Invalid background JSON format.")
+            return {'CANCELLED'}
+        
+        background_prompt = data["background"]["prompt"]
+
+        if ACTIVE_DRIVER is None:
+            self.report({'INFO'}, "Logging in to HuggingFace...")
+            ACTIVE_DRIVER = self.login_huggingface(
+                preferences.huggingface_username,
+                preferences.huggingface_password
+            )
+
+        if ACTIVE_DRIVER:
+            try:
+                driver = ACTIVE_DRIVER
+                url = "https://huggingface.co/spaces/black-forest-labs/FLUX.1-schnell"
+                driver.get(url)
+
+                time.sleep(5)
+
+                iframe = WebDriverWait(driver, 20).until(
+                    EC.presence_of_element_located((By.CLASS_NAME, "space-iframe"))
+                )
+                driver.switch_to.frame(iframe)
+
+                input_element = WebDriverWait(driver, 20).until(
+                    EC.element_to_be_clickable((By.CSS_SELECTOR, 'input[data-testid="textbox"]'))
+                )
+
+                input_element.clear()
+                input_element.send_keys(background_prompt)
+
+                run_button = WebDriverWait(driver, 10).until(
+                    EC.element_to_be_clickable((By.CSS_SELECTOR, 'button.lg.secondary.svelte-cmf5ev'))
+                )
+                run_button.click()
+
+                time.sleep(5)
+
+                img_element = WebDriverWait(driver, 30).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, 'img.svelte-1pijsyv'))
+                )
+
+                img_url = img_element.get_attribute('src')
+
+                image_path = os.path.join(scene_folder, "background.webp")
+                image_data = requests.get(img_url).content
+
+                with open(image_path, 'wb') as f:
+                    f.write(image_data)
+
+                driver.switch_to.default_content()
+
+                self.report({'INFO'}, f"Background image saved to: {image_path}")
+                return {'FINISHED'}
+
+            except Exception as e:
+                self.report({'ERROR'}, f"Error generating background image: {e}")
+                if ACTIVE_DRIVER:
+                    ACTIVE_DRIVER.quit()
+                    ACTIVE_DRIVER = None
+                return {'CANCELLED'}
+        else:
+            self.report({'ERROR'}, "Failed to login to HuggingFace.")
             return {'CANCELLED'}
 
 class SCENEGEN_OT_Generate3DModels(Operator):
@@ -783,7 +994,9 @@ class SCENEGEN_PT_MainPanel(Panel):
             box.label(text="Individual Steps:")
             col = box.column(align=True)
             col.operator("scenegen.generate_json", icon='TEXT')
+            col.operator("scenegen.generate_background_json", icon='TEXT')
             col.operator("scenegen.generate_images", icon='IMAGE_DATA')
+            col.operator("scenegen.generate_background_image", icon='IMAGE_DATA')
             col.operator("scenegen.generate_3d_models", icon='MESH_DATA')
             col.operator("scenegen.import_models", icon='IMPORT')
 
@@ -794,7 +1007,9 @@ classes = (
     SCENEGEN_OT_InstallSelenium,
     SceneGenProperties,
     SCENEGEN_OT_GenerateJSON,
+    SCENEGEN_OT_GenerateBackgroundJSON,
     SCENEGEN_OT_GenerateImages,
+    SCENEGEN_OT_GenerateBackgroundImage,
     SCENEGEN_OT_Generate3DModels,
     SCENEGEN_OT_ImportModels,
     SCENEGEN_OT_RunFullProcess,

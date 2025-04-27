@@ -1,0 +1,10 @@
+ai_mesh_generator_blender_extension/
+background_mesh_generation/*.jpg
+background_mesh_generation/*.png
+background_mesh_generation/*.npy
+background_mesh_generation/*.glb 
+background_mesh_generation/*.ply
+background_mesh_generation/*.json
+background_mesh_generation/*.webp
+background_mesh_generation/checkpoints/
+background_mesh_generation/ml-depth-pro/
